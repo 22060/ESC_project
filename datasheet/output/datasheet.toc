@@ -1,0 +1,16 @@
+\contentsline {section}{\numberline {1}概要（Description）}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}目的・用途}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}主要仕様}{2}{subsection.1.2}%
+\contentsline {section}{\numberline {2}ポート設定（Ports / Pinout）}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}コネクタ一覧}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}ピンアサイン}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}ポート設定（ソフトウェア）}{5}{subsection.2.3}%
+\contentsline {section}{\numberline {3}機能説明（Functional Description）}{7}{section.3}%
+\contentsline {subsection}{\numberline {3.1}システム構成}{7}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}電源系}{8}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}ゲート駆動・パワーステージ}{8}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}保護機能}{8}{subsection.3.4}%
+\contentsline {section}{\numberline {4}回路図（Schematics）}{9}{section.4}%
+\contentsline {subsection}{\numberline {4.1}全体回路図（1枚の場合）}{9}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}回路図（複数ページPDFの場合）}{9}{subsection.4.2}%
+\contentsline {section}{\numberline {5}改訂履歴（Revision History）}{9}{section.5}%
