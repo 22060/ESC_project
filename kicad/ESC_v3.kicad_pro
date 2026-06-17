@@ -782,6 +782,18 @@
       "Root"
     ],
     [
+      "89dab747-500c-4d30-aaae-2892da5dc15f",
+      "power_stage1"
+    ],
+    [
+      "b58b0be8-8252-4a19-bb00-8315ea20fe3c",
+      "power_stage"
+    ],
+    [
+      "f6007c1e-2115-4cff-923c-cb43600cb7fd",
+      "power_stage2"
+    ],
+    [
       "c7e7597f-e80e-4b08-94bb-e83c44551dab",
       "POWER"
     ]
