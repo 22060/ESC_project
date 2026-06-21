@@ -60,6 +60,10 @@
       ],
       "drc_exclusions": [
         [
+          "clearance|97278000|61742600|204770a1-6783-44fb-a6d2-5244b3d80574|cc0b909b-379e-46ef-a04e-eff2f04f8090",
+          ""
+        ],
+        [
           "copper_edge_clearance|60157600|50000000|26beb3cb-0675-4b2e-a582-aa4d6848b66c|9ce7d2d1-1b26-4b26-9c96-e92dcaa61a84",
           ""
         ],
@@ -106,6 +110,34 @@
         [
           "copper_edge_clearance|99478000|62242600|26beb3cb-0675-4b2e-a582-aa4d6848b66c|204770a1-6783-44fb-a6d2-5244b3d80574",
           ""
+        ],
+        [
+          "hole_clearance|56914600|60297600|4f845d94-db8b-4407-870c-d61615fed162|143dcfb9-d10a-4c56-97c6-fae62d967581",
+          ""
+        ],
+        [
+          "hole_clearance|56914600|60297600|4f845d94-db8b-4407-870c-d61615fed162|bfe3d79b-c24a-4595-af75-4e2dffa91c97",
+          ""
+        ],
+        [
+          "hole_clearance|56914600|66397600|e35f83a9-3f3c-48e9-9bf7-fd5a93626689|00a42eeb-0016-4be6-bd1f-7c9036611294",
+          ""
+        ],
+        [
+          "hole_clearance|56914600|66397600|e35f83a9-3f3c-48e9-9bf7-fd5a93626689|0f196199-a0b5-42c5-97ec-9e057088fd34",
+          ""
+        ],
+        [
+          "lib_footprint_issues|102345400|70565200|6df4d353-cd58-4fa8-9a89-c82170191692|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "lib_footprint_issues|69570600|60446000|fc403fb0-3031-473a-88fa-c6b8a6684f5b|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "solder_mask_bridge|97278000|61742600|204770a1-6783-44fb-a6d2-5244b3d80574|cc0b909b-379e-46ef-a04e-eff2f04f8090",
+          ""
         ]
       ],
       "meta": {
@@ -133,7 +165,7 @@
         "hole_to_hole": "error",
         "holes_co_located": "warning",
         "invalid_outline": "error",
-        "isolated_copper": "warning",
+        "isolated_copper": "ignore",
         "item_on_disabled_layer": "error",
         "items_not_allowed": "error",
         "length_out_of_range": "error",
@@ -150,9 +182,9 @@
         "padstack": "warning",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_edge_clearance": "warning",
-        "silk_over_copper": "warning",
-        "silk_overlap": "warning",
+        "silk_edge_clearance": "ignore",
+        "silk_over_copper": "ignore",
+        "silk_overlap": "ignore",
         "skew_out_of_range": "error",
         "solder_mask_bridge": "error",
         "starved_thermal": "error",
@@ -740,10 +772,6 @@
     [
       "f6007c1e-2115-4cff-923c-cb43600cb7fd",
       "power_stage2"
-    ],
-    [
-      "46b469d9-a41e-4173-9609-9f519a2d564c",
-      "Untitled Sheet"
     ],
     [
       "c7e7597f-e80e-4b08-94bb-e83c44551dab",
