@@ -12106,7 +12106,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 73.66 194.3099 0)
 			(effects
 				(font
@@ -12251,7 +12251,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 46.6852 189.23 0)
 			(effects
 				(font
@@ -12924,7 +12924,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "5m"
 			(at 124.46 100.33 90)
 			(effects
 				(font
@@ -13137,7 +13137,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "1k"
 			(at 67.31 185.42 90)
 			(effects
 				(font
@@ -13624,7 +13624,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "1k"
 			(at 134.62 77.47 90)
 			(effects
 				(font
@@ -14161,7 +14161,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "D"
+		(property "Value" "1N5819WS"
 			(at 110.49 40.6399 90)
 			(effects
 				(font
@@ -14456,7 +14456,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "1k"
 			(at 142.24 97.79 90)
 			(effects
 				(font
@@ -14986,7 +14986,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 73.66 186.6899 0)
 			(effects
 				(font
@@ -15741,7 +15741,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 140.97 78.7399 0)
 			(effects
 				(font
@@ -16020,7 +16020,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 148.59 99.0599 0)
 			(effects
 				(font
@@ -16178,7 +16178,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 126.6952 43.18 0)
 			(effects
 				(font
@@ -17198,7 +17198,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 116.5352 43.18 0)
 			(effects
 				(font
@@ -17738,7 +17738,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "5m"
 			(at 40.64 180.34 90)
 			(effects
 				(font
@@ -17939,7 +17939,7 @@
 				)
 			)
 		)
-		(property "Value" "D"
+		(property "Value" "1N5819WS"
 			(at 27.94 24.13 0)
 			(effects
 				(font
@@ -18091,7 +18091,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "5m"
 			(at 124.46 80.01 90)
 			(effects
 				(font
@@ -18332,7 +18332,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SOD-323"
+		(property "Footprint" "Diode_SMD:D_SOD-323_HandSoldering"
 			(at 173.355 138.43 0)
 			(effects
 				(font
@@ -18670,7 +18670,7 @@
 				)
 			)
 		)
-		(property "Value" "10uH"
+		(property "Value" "22uH"
 			(at 111.76 33.02 90)
 			(effects
 				(font
@@ -19174,7 +19174,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 140.97 86.3599 0)
 			(effects
 				(font
@@ -19814,7 +19814,7 @@
 				)
 			)
 		)
-		(property "Value" "1N4148WT"
+		(property "Value" "1N5819WS"
 			(at 120.65 144.78 0)
 			(effects
 				(font
@@ -19822,7 +19822,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SOD-523"
+		(property "Footprint" "Diode_SMD:D_SOD-323_HandSoldering"
 			(at 120.65 144.145 0)
 			(effects
 				(font
@@ -20457,7 +20457,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "33k"
 			(at 148.59 106.6799 0)
 			(effects
 				(font

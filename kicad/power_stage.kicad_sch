@@ -782,7 +782,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10"
 			(at 96.52 64.77 90)
 			(effects
 				(font
@@ -858,7 +858,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10"
 			(at 96.52 74.93 90)
 			(effects
 				(font
