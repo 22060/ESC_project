@@ -7747,6 +7747,12 @@
 		(uuid "2b5bec6a-9ae1-41ab-b7b4-c1515236fb22")
 	)
 	(junction
+		(at 190.5 52.07)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2f8faf69-f92a-439f-98f8-1b8e0a012620")
+	)
+	(junction
 		(at 278.13 156.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7915,6 +7921,12 @@
 		(uuid "c962ca6f-28e2-4014-853c-40f57ff4e24b")
 	)
 	(junction
+		(at 181.61 41.91)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ccec89ab-41f6-4983-8753-23b11e49ec90")
+	)
+	(junction
 		(at 267.97 140.97)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8019,6 +8031,16 @@
 			(type default)
 		)
 		(uuid "067275c1-56ac-412c-abed-fe78834365f6")
+	)
+	(wire
+		(pts
+			(xy 190.5 52.07) (xy 193.04 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "072e7d83-8570-4746-bdc6-1a47a77448e6")
 	)
 	(wire
 		(pts
@@ -8269,6 +8291,16 @@
 			(type default)
 		)
 		(uuid "21c18479-5065-4eb4-98ef-7e79bd0fc9b9")
+	)
+	(wire
+		(pts
+			(xy 173.99 52.07) (xy 190.5 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "229eceac-64c5-4b19-8f30-d18b3cb3970b")
 	)
 	(wire
 		(pts
@@ -9712,6 +9744,16 @@
 	)
 	(wire
 		(pts
+			(xy 190.5 44.45) (xy 190.5 41.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d3f67895-6b01-4b56-ae86-6f1cd248d065")
+	)
+	(wire
+		(pts
 			(xy 92.71 83.82) (xy 96.52 83.82)
 		)
 		(stroke
@@ -9809,6 +9851,16 @@
 			(type default)
 		)
 		(uuid "dfe143e2-92b6-442e-8604-0379169c8418")
+	)
+	(wire
+		(pts
+			(xy 190.5 41.91) (xy 181.61 41.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e0abdab8-b7a8-4210-bb86-bcdb03dcf4a1")
 	)
 	(wire
 		(pts
@@ -10278,6 +10330,28 @@
 			)
 		)
 	)
+	(global_label "TMP"
+		(shape input)
+		(at 193.04 52.07 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "1d9e77af-dfc6-4bde-bf72-e5d548592192")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 199.7142 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "CAN_RX"
 		(shape input)
 		(at 87.63 43.18 0)
@@ -10604,6 +10678,28 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "TMP"
+		(shape input)
+		(at 31.75 43.18 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "5dd66e9b-cd24-4828-94de-eaa0e14c0bd9")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 25.0758 43.18 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -16066,6 +16162,85 @@
 			(project "ESC_v3"
 				(path "/643a74e6-da9a-4f0e-bb82-8f2ac15e39e7"
 					(reference "R16")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 190.5 48.26 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "812c3375-d3ce-4e7a-b155-1b350210b508")
+		(property "Reference" "R34"
+			(at 193.04 46.9899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "10k"
+			(at 193.04 49.5299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric_Pad0.72x0.64mm_HandSolder"
+			(at 192.278 48.26 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 190.5 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 190.5 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C25744"
+			(at 184.15 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "e52d2f50-2474-4438-a2e2-32cf2d3afdd5")
+		)
+		(pin "1"
+			(uuid "75852587-71fb-46a9-8254-452e9b679324")
+		)
+		(instances
+			(project "ESC_v3"
+				(path "/643a74e6-da9a-4f0e-bb82-8f2ac15e39e7"
+					(reference "R34")
 					(unit 1)
 				)
 			)
