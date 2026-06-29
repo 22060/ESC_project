@@ -110,3 +110,13 @@ Release/
 # =========================================================
 *.tmp
 *.swp
+# add latex files
+*.aux
+*.fdb_latexmk
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.bbl
+*.fls
+# add STM32CubeMX c# files
