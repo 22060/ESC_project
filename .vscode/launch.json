@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "STM32 Debug (ST-Link)",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/Debug/ESC_v3.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "stlink",
+            "serverpath": "C:/ST/STM32CubeCLT_1.18.0/STLink-gdb-server/bin/ST-LINK_gdbserver.exe",
+            "stm32cubeprogrammer": "C:/ST/STM32CubeCLT_1.18.0/STM32CubeProgrammer/bin",
+            "runToEntryPoint": "main",
+            "device": "STM32G431xx",
+            "preLaunchTask": "Build STM32"  // ←この1行を最後に追加（カンマのつけ忘れに注意）
+        }
+    ]
+}
