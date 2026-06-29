@@ -297,10 +297,10 @@ volatile bool is_100ms = false;
 // 【追加】Z相による補正用の変数
 volatile bool z_phase_detected_once = false;
 volatile int32_t z_phase_offset = 0;
-uint16_t AS5048A_ReadAngle(void);
 int32_t buf_enc = 0;
 float electric_theta = 0;
-int polePairs = 7; 
+int polePairs = 7;
+uint16_t AS5048A_ReadAngle(void);
 inline int32_t read_encoder_value(void)
 {
     static int32_t last = 0;
@@ -322,14 +322,11 @@ AS5048A encoder(AS5048A_MODE::SINGLE_READ_WRITE, {GPIO_PIN_15, GPIOC}, &hspi1);
 
 extern "C" void setup(void)
 {
-    // Setup code here
-    HAL_UART_Transmit(&huart3, (uint8_t*)"CORDIC TEST\r\n", 11, HAL_MAX_DELAY);
-    float sin, cos;
-    CORDIC_Wrapper::sin_cos(M_PI / 4.0f, &sin, &cos);
-    char buffer[50];
-    snprintf(buffer, sizeof(buffer), "sin(45) = %f, cos(45) = %f\r\n", sin, cos);
-    HAL_UART_Transmit(&huart3, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Setup start\r\n", 13, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart3, (uint8_t*)"this is a bldc MD @ 2026-06-29\r\n", 36, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart3, (uint8_t*)"datasheet: https://circuit.ryutolab.com/datasheets \r\n", 50, HAL_MAX_DELAY);
 
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Timer for PWM_CH1 start\r\n", 28, HAL_MAX_DELAY);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -337,8 +334,10 @@ extern "C" void setup(void)
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Timer for rotary encoder start\r\n", 30, HAL_MAX_DELAY);
     HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Motor calibration start\r\n", 27, HAL_MAX_DELAY);
         // モーターキャリブレーション
     static KJ_FOC_Utils::AlphaBeta outputAlphaBeta = KJ_FOC_Utils::inverseParkTransform({1, 0}, 1, 0);
     static KJ_FOC_Utils::Phase voltages = KJ_FOC_Utils::inverseClarkeTransform(outputAlphaBeta);
@@ -351,17 +350,18 @@ extern "C" void setup(void)
     // 【追加】キャリブレーションごとにZ相のオフセットもリセットさせる
     z_phase_detected_once = false; 
     mech_count = 0;
-
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Starting timers interrupts for FOC\r\n", 36, HAL_MAX_DELAY);
     HAL_TIM_Base_Start_IT(&htim1);
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_TIM_Base_Start_IT(&htim7);
-
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Starting SSD1306 OLED\r\n", 25, HAL_MAX_DELAY);
     SSD1306_Init();
     SSD1306_WriteString(0, 0, "Hello STM32!");
     SSD1306_WriteString(0, 8, "SSD1306 OK");
     SSD1306_WriteString(0, 16, "WS2812 OK");
     SSD1306_WriteString(0, 24, "Setup complete");
     SSD1306_UpdateScreen();
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Setup complete\r\n", 16, HAL_MAX_DELAY);
 }
 int time = 0;
 int hue = 0;
@@ -444,9 +444,9 @@ extern "C" void loop(void)
         // 6. 画面の物理更新 (バッファを一括転送)
         // ----------------------------------------------------
         SSD1306_UpdateScreen();
-        if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_6))
+        if(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_6))
         {
-            r = 40;
+            r = 10;
         }
         else
         {
@@ -454,7 +454,7 @@ extern "C" void loop(void)
         }
         if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_14)){
             
-            g = 40;
+            g = 10;
         }
         else
         {
@@ -464,90 +464,6 @@ extern "C" void loop(void)
     }
     //  HAL_Delay(10);
 }
-#define AS5048A_CS_GPIO_PORT  GPIOC
-#define AS5048A_CS_PIN        GPIO_PIN_15
-// AS5048A レジスタ・コマンド定義
-#define AS5048A_CMD_READ      0x4000
-#define AS5048A_REG_AGC       0x3FFD
-#define AS5048A_REG_MAG       0x3FFE
-#define AS5048A_REG_ANGLE     0x3FFF
-#define AS5048A_REG_CLRERR    0x0001
-/**
- * @brief 16ビットデータの偶数パリティを計算し、最上位ビット(Bit 15)にセットする
- */
-static uint16_t AS5048A_CalculateParity(uint16_t data) {
-    uint16_t count = 0;
-    uint16_t temp = data & 0x7FFF; // 15ビット目クリア
-
-    while (temp) {
-        count += (temp & 1);
-        temp >>= 1;
-    }
-    
-    // ビットの総数が奇数なら、15ビット目を1にして偶数（Even）にする
-    if (count % 2 != 0) {
-        data |= 0x8000;
-    } else {
-        data &= 0x7FFF;
-    }
-    return data;
-}
-/**
- * @brief AS5048Aと16ビットの送受信を行う低層関数
- */
-uint16_t AS5048A_SPI_Transfer(uint16_t command) {
-    uint16_t tx_data = AS5048A_CalculateParity(command);
-    uint16_t rx_data = 0;
-
-    // CSをLOW（アクティブ）にする
-    HAL_GPIO_WritePin(AS5048A_CS_GPIO_PORT, AS5048A_CS_PIN, GPIO_PIN_RESET);
-    
-    // 16ビット送受信 (タイムアウト10ms)
-    HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)&tx_data, (uint8_t*)&rx_data, 1, 10);
-    
-    // CSをHIGH（非アクティブ）にする
-    HAL_GPIO_WritePin(AS5048A_CS_GPIO_PORT, AS5048A_CS_PIN, GPIO_PIN_SET);
-
-    return rx_data;
-}
-/**
- * @brief AS5048Aから現在の生の角度データ(0〜16383)を取得する
- * @return uint16_t 14ビットの角度データ。エラー時は0xFFFFを返す
- */
-uint16_t AS5048A_ReadAngle(void) {
-    uint16_t response;
-    
-    // 1. 角度レジスタの読み出しコマンドを送る（戻り値は前回のコマンド結果なので破棄）
-    AS5048A_SPI_Transfer(AS5048A_CMD_READ | AS5048A_REG_ANGLE);
-    
-    // 2. もう一度ダミーで送ることで、上のコマンドに対する角度データが返ってくる
-    response = AS5048A_SPI_Transfer(AS5048A_CMD_READ | AS5048A_REG_ANGLE);
-
-    // エラーフラグ(Bit 14)を確認
-    if (response & 0x4000) {
-        // エラーが発生している場合はエラーレジスタをクリア
-        AS5048A_SPI_Transfer(AS5048A_CMD_READ | AS5048A_REG_CLRERR);
-        return 0xFFFF; // エラーを示す値を返す
-    }
-
-    // 下位14ビットが角度データ
-    return (response & 0x3FFF);
-}
-
-/**
- * @brief 生の角度データを「度（degree, 0.0〜360.0）」に変換する関数
- */
-float AS5048A_GetAngleDegrees(void) {
-    uint16_t raw_angle = AS5048A_ReadAngle();
-    
-    if (raw_angle == 0xFFFF) {
-        return -1.0f; // エラー時
-    }
-    
-    // 14ビット(16384)で360度
-    return ((float)raw_angle * 360.0f) / 16384.0f;
-}
-
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
