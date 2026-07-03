@@ -3,6 +3,12 @@
 #include <cstdlib>
 #include <cstring>
 #include "cordic_wrapper.hpp"
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+#ifndef M_2PI
+#define M_2PI 6.28318530717958647692f
+#endif
 
 static uint8_t buffer[128 * 64 / 8];
 extern I2C_HandleTypeDef hi2c2;
@@ -94,14 +100,16 @@ void SSD1306_FillScreen(uint8_t color) {
 }
 
 void SSD1306_DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color) {
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1; 
-    int err = dx + dy, e2;
+    int16_t dx = abs(x1 - x0);
+    int16_t dy = -abs(y1 - y0);
+    int16_t sx = (x0 < x1) ? 1 : -1;
+    int16_t sy = (y0 < y1) ? 1 : -1;
+    int16_t err = dx + dy;
 
     while (true) {
         SSD1306_DrawPixel(x0, y0, color);
         if (x0 == x1 && y0 == y1) break;
-        e2 = 2 * err;
+        int16_t e2 = 2 * err;
         if (e2 >= dy) { err += dy; x0 += sx; }
         if (e2 <= dx) { err += dx; y0 += sy; }
     }
@@ -148,17 +156,25 @@ void SSD1306_DrawCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color) {
 }
 
 void SSD1306_DrawMeter(uint8_t centerX, uint8_t centerY, float angleRad, uint8_t radius, uint8_t color) {
-    // 外枠の円を描画
+    // 1. 外枠は毎回描画しなくて良いならここから外してください
     SSD1306_DrawCircle(centerX, centerY, radius, color);
 
-    // 指針の先端の座標を計算
     float sin_val = 0.0f;
     float cos_val = 0.0f;
+    if(angleRad < -M_PI) angleRad += M_2PI;
+    if(angleRad > M_PI) angleRad -= M_2PI;
     CORDIC_Wrapper::sin_cos(angleRad, &sin_val, &cos_val);
 
-    uint8_t pointerX = centerX + static_cast<int8_t>(cos_val * (radius - 2));
-    uint8_t pointerY = centerY - static_cast<int8_t>(sin_val * (radius - 2));
+    // int16_t で計算を行う
+    uint8_t targetX = centerX + (int16_t)(cos_val * (radius - 2));
+    uint8_t targetY = centerY - (int16_t)(sin_val * (radius - 2));
 
-    // 中心から先端に向けて指針（ライン）を描画
-    SSD1306_DrawLine(centerX, centerY, pointerX, pointerY, color);
+    // 描画範囲外へのハミ出し防止（クリッピング）
+    if (targetX < 0) targetX = 0;
+    if (targetX > 127) targetX = 127;
+    if (targetY < 0) targetY = 0;
+    if (targetY > 63) targetY = 63;
+
+    // Line描画関数は uint8_t を要求しているため、ここでキャスト
+    SSD1306_DrawLine(centerX, centerY, (uint8_t)targetX, (uint8_t)targetY, color);
 }

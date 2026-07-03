@@ -13,10 +13,10 @@ class CORDIC_Wrapper {
     private:
         CORDIC_Wrapper() = default; // インスタンス化を防ぐためにコンストラクタをprivateにする
         enum class CORDIC_Function {
-            SINE = 0,
-            PHASE = 1
+            SINE = 1,
+            PHASE = 2
         };
-        static CORDIC_Function lastFunction; // 最後に使用したCORDICの関数を記録
+        inline static CORDIC_Function lastFunction; // 最後に使用したCORDICの関数を記録
 public:
     /**
      * @brief SinとCosを同時に計算
@@ -25,7 +25,7 @@ public:
      * @param pCos 余弦の出力先
      */
     static inline void sin_cos(float angle_rad, float* pSin, float* pCos){
-        if(lastFunction != CORDIC_Function::SINE){
+        if(lastFunction != CORDIC_Function::SINE && 1){
             // 1. CORDICの設定 (Sin/Cosモード)
             CORDIC_ConfigTypeDef sConfig = {0};
             sConfig.Function = CORDIC_FUNCTION_SINE;      // Sineを指定するとCosも計算される
@@ -41,10 +41,9 @@ public:
         }
 
         // 2. 入力をQ31形式に変換 (-π～π を -1～1 に正規化)
-        float input_norm = angle_rad  / float(M_PI);
-        // 範囲外チェック（簡易版）
-        while (input_norm > 1.0f) input_norm -= 2.0f;
-        while (input_norm < -1.0f) input_norm += 2.0f;
+        float input_norm = angle_rad / float(M_PI);
+        if (input_norm > 1.0f) input_norm = 1.0f;
+        if (input_norm < -1.0f) input_norm = -1.0f;
         
         int32_t q31_input = (int32_t)(input_norm * 2147483647.0f);
         int32_t q31_output[2]; // [0]=Sin, [1]=Cos

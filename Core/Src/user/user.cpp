@@ -300,6 +300,7 @@ volatile int32_t z_phase_offset = 0;
 int32_t buf_enc = 0;
 float electric_theta = 0;
 int polePairs = 7;
+int rotate_per_sec = 0;
 uint16_t AS5048A_ReadAngle(void);
 inline int32_t read_encoder_value(void)
 {
@@ -309,8 +310,34 @@ inline int32_t read_encoder_value(void)
     last = now;
     return diff;
 }
-AS5048A encoder(AS5048A_MODE::SINGLE_READ_WRITE, {GPIO_PIN_15, GPIOC}, &hspi1);
-
+int callbackcout = 0;
+int make1s = 0;
+int callback_flag = 0;
+void test_callback(void)
+{
+    callbackcout++;
+    // callback_flag = 1;
+    // HAL_UART_Transmit(&huart3, (uint8_t*)"Interrupt triggered!\r\n", 22, HAL_MAX_DELAY);
+}
+AS5048A encoder(AS5048A_MODE::SINGLE_READ_WRITE, {GPIO_PIN_15, GPIOC}, &hspi1,0, nullptr);
+bool isStopped = true;
+void stopmotor(void)
+{
+    if(!isStopped)
+    {
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1249);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1249);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 1249);
+        isStopped = true;
+    }
+}
+void startmotor(void)
+{
+    if(isStopped)
+    {
+        isStopped = false;
+    }
+}
 // 数学定数の定義 (M_PIが定義されていない場合用)
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -325,6 +352,9 @@ extern "C" void setup(void)
     HAL_UART_Transmit(&huart3, (uint8_t*)"Setup start\r\n", 13, HAL_MAX_DELAY);
     HAL_UART_Transmit(&huart3, (uint8_t*)"this is a bldc MD @ 2026-06-29\r\n", 36, HAL_MAX_DELAY);
     HAL_UART_Transmit(&huart3, (uint8_t*)"datasheet: https://circuit.ryutolab.com/datasheets \r\n", 50, HAL_MAX_DELAY);
+
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Starting CORDIC\r\n", 18, HAL_MAX_DELAY);
+    HAL_CORDIC_Init(&hcordic);
 
     HAL_UART_Transmit(&huart3, (uint8_t*)"Timer for PWM_CH1 start\r\n", 28, HAL_MAX_DELAY);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -350,7 +380,10 @@ extern "C" void setup(void)
     // 【追加】キャリブレーションごとにZ相のオフセットもリセットさせる
     z_phase_detected_once = false; 
     mech_count = 0;
+    encoder.setZeroPosition(encoder.getAngle());
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Motor calibration complete\r\n", 33, HAL_MAX_DELAY);
     HAL_UART_Transmit(&huart3, (uint8_t*)"Starting timers interrupts for FOC\r\n", 36, HAL_MAX_DELAY);
+    // encoder.init();
     HAL_TIM_Base_Start_IT(&htim1);
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_TIM_Base_Start_IT(&htim7);
@@ -362,14 +395,31 @@ extern "C" void setup(void)
     SSD1306_WriteString(0, 24, "Setup complete");
     SSD1306_UpdateScreen();
     HAL_UART_Transmit(&huart3, (uint8_t*)"Setup complete\r\n", 16, HAL_MAX_DELAY);
+
 }
 int time = 0;
 int hue = 0;
+int _rotate_per_ = 0;
 uint8_t r, g, b;
+volatile int32_t  encoder_row = 0;
 extern "C" void loop(void)
 {
+    if(make1s == 1)
+    {
+        make1s = 0;
+        HAL_UART_Transmit(&huart3, (uint8_t*)"1s passed\r\n", 12, HAL_MAX_DELAY);
+        static char buff[64];
+        sprintf(buff,"callbackcout: %d\r\n", callbackcout);
+        callbackcout = 0;
+        HAL_UART_Transmit(&huart3, (uint8_t*)buff, strlen(buff), HAL_MAX_DELAY);
+        // _rotate_per_ = speed_count;
+        sprintf(buff,"rotate_per_sec: %ld\r\n", speed_count);
+        HAL_UART_Transmit(&huart3, (uint8_t*)buff, strlen(buff), HAL_MAX_DELAY);
+        // speed_count = 0;
+    }
     if(is_100ms)
     {
+        // make1s++;
         static char buff[64];
         is_100ms = false;
         // ログ送信
@@ -382,44 +432,15 @@ extern "C" void loop(void)
         // ----------------------------------------------------
         // 2. ラジアン角度の取得・表示
         // ----------------------------------------------------
-        float rad = encoder.getAngleRadian();
+        float rad = mech_count * 2.0f * M_PI / 4096.0f; // 14ビットのエンコーダを想定
+        // float rad = (encoder_row / 16384.0f) * M_2PI * polePairs;
         
         // SSD1306表示
         snprintf(buff, sizeof(buff), "rad: %.2f", rad);
         SSD1306_WriteString(0, 0, buff);
-        
-        // ----------------------------------------------------
-        // 3. 磁力強度 (Magnitude) の取得・表示
-        // ----------------------------------------------------
-        float mag = encoder.getMagnitude();
-        
-        
-        // SSD1306表示
-        snprintf(buff, sizeof(buff), "Mag: %.2f", mag); // 画面幅に収まるよう"Mag:"に微調整
-        SSD1306_WriteString(0, 10, buff); // 行間が詰まりすぎないようY座標を8→10に調整
-        
-        // ----------------------------------------------------
-        // 4. エラー & AGCの取得・表示
-        // ----------------------------------------------------
-        uint16_t agc_and_err = encoder.getErrorAndAGC();
-        
-        // 【修正】エラーフラグのみを抽出 (上位ビットのエラーマスクをチェック)
-        // パリティエラー、コマンド送信エラー、SPIエラーのいずれかがあるか確認
-        uint16_t error_flag = agc_and_err & 0x0F00; // 上位3ビットを抽出
-        
-        // 抽出したAGC値（下位のデータ部分など、必要に応じて画面表示用として残す場合）
-        // ※もし不要なら消しても大丈夫です
-        uint16_t agc_val = agc_and_err & 0x00FF; // 下位8ビットを抽出
 
-
-        // 【修正】UART送信：エラーフラグだけを送信
-        // 16進数(0x%04X)などで出力すると、どのエラーが立っているか解析しやすくなります
-        snprintf(buff, sizeof(buff), "ERR: 0x%02X", error_flag>>16);
-        SSD1306_WriteString(64, 0, buff);
-        
-        // SSD1306表示 (画面側はこれまでの通りAGCの値を表示)
-        snprintf(buff, sizeof(buff), "AGC: %d", agc_val);
-        SSD1306_WriteString(64, 10, buff);
+        snprintf(buff, sizeof(buff), "rps: %d", _rotate_per_);
+        SSD1306_WriteString(0, 8, buff);
         
         // ----------------------------------------------------
         // 【追加】5. 右下32x32ピクセルでの角度可視化 (X:112, Y:48 を中心とする)
@@ -433,10 +454,6 @@ extern "C" void loop(void)
         snprintf(buff, sizeof(buff), "rad: %.2f", rad);
         SSD1306_WriteString(0, 20, buff);
         SSD1306_DrawMeter(centerX, centerY, rad, radius, 1);
-        rad = mech_count * (M_2PI / 2048.0f); // 1回転で2048カウントのエンコーダを想定
-        snprintf(buff, sizeof(buff), "enc: %ld", mech_count);
-        SSD1306_WriteString(64, 20, buff);
-        SSD1306_DrawMeter(centerX + 32, centerY, rad, radius, 1);
         rad = electric_theta; // 電気角度を表示
         SSD1306_DrawMeter(centerX + 64, centerY, rad, radius, 1);
 
@@ -455,10 +472,12 @@ extern "C" void loop(void)
         if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_14)){
             
             g = 10;
+            isStopped = true;
         }
         else
         {
             g = 0;
+            isStopped = false;
         }
         WS2812.SetColor(r,g,b);
     }
@@ -480,17 +499,39 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         {
             // 2回目以降: Z相通過のタイミングで mech_count を本来のオフセット位置に強制リセット（ズレの補正）
             mech_count = z_phase_offset;
+            b = 10;
         }
         speed_count++;
+        _rotate_per_++;
     }
 }
-
+volatile bool spiBusy;
+volatile uint8_t encoderRx[2];
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    if(hspi == encoder.getSPIHandle())
+    {
+        // ブレークポイント
+        encoder.SPI_CS_Deselect();
+        uint16_t response = (encoderRx[0] << 8) | encoderRx[1];
+        if(!(__builtin_popcount((unsigned int)response) & 1)){
+            encoder_row = response & 0x3FFF; // 14ビットのデータ部分を抽出
+        }
+        // エラーフラグ(Bit14)の確認
+        if ((response & AS5048A_ERROR_SEND_COMMAND) != 0) 
+        {
+            encoder_row = ((encoderRx[0] << 8) | encoderRx[1]);
+            encoder_row = (16384 - encoder_row) & 0x3FFF;
+        }
+        spiBusy = false;
+    }
+}
 uint16_t count_bunsyu = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if(htim->Instance == TIM1)
+    if(htim->Instance == TIM1 && isStopped == false)
     {
-        static uint16_t count = 200;
+        static uint16_t count = 300;
         static uint16_t duty[3] = {0, 0, 0};
         static uint16_t bunkainou = 1200;
         static uint16_t btime = 0;
@@ -505,27 +546,60 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
 
         buf_enc = read_encoder_value();
-        mech_count += buf_enc;
-        
+        // buf_enc = encoder.getAngleRadian();
+        mech_count -= buf_enc;
         // mech_countを常に 0 ~ 4095 の範囲に収める
-        mech_count %= 2048; // 変更: 4096から2048に変更
+        mech_count %= 4096; // 変更: 4096から2048に変更
         if(mech_count < 0)
         {
-            mech_count += 2048;
+            mech_count += 4096;
+            speed_count++;
         }
-        
-        electric_theta = (mech_count / 2048.0f) * M_2PI * polePairs;
-        electric_theta = fmodf(electric_theta, M_2PI);
+        // mech_count = (rx[0] << 8) | rx[1];
+        // static uint16_t encoder_inv = (16384 - encoder_row) & 0x3FFF;
+        // electric_theta = (encoder_row / 16384.0f) * M_2PI * polePairs;
+        electric_theta = (mech_count / 4096.0f) * M_2PI * polePairs; // 変更: 4096から2048に変更
+        // electric_theta = fmodf(electric_theta, M_2PI);
+        while(electric_theta < -M_PI) electric_theta += M_2PI;
+        while(electric_theta >= M_PI) electric_theta -= M_2PI;
         
         float angle[3];
         float sin, cos;
         CORDIC_Wrapper::sin_cos(electric_theta, &sin, &cos);
         KJ_FOC_Utils::AlphaBeta outputAlphaBeta = KJ_FOC_Utils::inverseParkTransform({0, -1*count}, cos, sin);
         KJ_FOC_Utils::Phase voltages = KJ_FOC_Utils::inverseClarkeTransform(outputAlphaBeta);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, voltages.a + 1249);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, voltages.b + 1249);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, voltages.c + 1249);
+        if(isStopped)
+        {
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
+        }else{
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, voltages.a + 1249);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, voltages.b + 1249);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, voltages.c + 1249);
+        }
+                    
+            callbackcout++;
+        // encoder.SPI_CS_Select();
+        if(spiBusy == false)
+        {
+            spiBusy = true;
+            encoder.SPI_CS_Select();
+            const static uint16_t packet = makePacket(0x3FFF, true); // 送信するパケットを作成
+        
+            const static uint8_t tx[2] = { 
+                static_cast<uint8_t>((packet >> 8) & 0xFF), 
+                static_cast<uint8_t>(packet & 0xFF) 
+            }; 
+            HAL_SPI_TransmitReceive_DMA(
+                encoder.getSPIHandle(),
+                tx,
+                (uint8_t*)&encoderRx,
+                2);
+        }
     }else if(htim->Instance == TIM7){
         is_100ms = true;
+    }else if(htim->Instance == TIM6){
+        make1s = 1;
     }
 }
