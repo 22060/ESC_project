@@ -583,7 +583,7 @@ static void MX_OPAMP1_Init(void)
   hopamp1.Init.InternalOutput = ENABLE;
   hopamp1.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
   hopamp1.Init.PgaConnect = OPAMP_PGA_CONNECT_INVERTINGINPUT_NO;
-  hopamp1.Init.PgaGain = OPAMP_PGA_GAIN_64_OR_MINUS_63;
+  hopamp1.Init.PgaGain = OPAMP_PGA_GAIN_32_OR_MINUS_31;
   hopamp1.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
   if (HAL_OPAMP_Init(&hopamp1) != HAL_OK)
   {
@@ -617,7 +617,7 @@ static void MX_OPAMP2_Init(void)
   hopamp2.Init.InternalOutput = ENABLE;
   hopamp2.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
   hopamp2.Init.PgaConnect = OPAMP_PGA_CONNECT_INVERTINGINPUT_NO;
-  hopamp2.Init.PgaGain = OPAMP_PGA_GAIN_64_OR_MINUS_63;
+  hopamp2.Init.PgaGain = OPAMP_PGA_GAIN_32_OR_MINUS_31;
   hopamp2.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
   if (HAL_OPAMP_Init(&hopamp2) != HAL_OK)
   {
@@ -651,7 +651,7 @@ static void MX_OPAMP3_Init(void)
   hopamp3.Init.InternalOutput = ENABLE;
   hopamp3.Init.TimerControlledMuxmode = OPAMP_TIMERCONTROLLEDMUXMODE_DISABLE;
   hopamp3.Init.PgaConnect = OPAMP_PGA_CONNECT_INVERTINGINPUT_NO;
-  hopamp3.Init.PgaGain = OPAMP_PGA_GAIN_64_OR_MINUS_63;
+  hopamp3.Init.PgaGain = OPAMP_PGA_GAIN_32_OR_MINUS_31;
   hopamp3.Init.UserTrimming = OPAMP_TRIMMING_FACTORY;
   if (HAL_OPAMP_Init(&hopamp3) != HAL_OK)
   {
@@ -1234,6 +1234,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

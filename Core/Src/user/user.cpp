@@ -338,6 +338,18 @@ void startmotor(void)
         isStopped = false;
     }
 }
+float feedback_current[3] = {0.0f};
+float offset_current[3] = {0.0f};
+
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc){
+    if (hadc->Instance == ADC1) {
+        feedback_current[0] = ((ADC1->JDR1 - offset_current[0]) / 4095.0f) * 3.3f / 64.0f / 2 * 1000.0f;
+    }
+    else if (hadc->Instance == ADC2) {
+        feedback_current[1] = ((ADC2->JDR1 - offset_current[1]) / 4095.0f) * 3.3f / 64.0f / 2 * 1000.0f;
+        feedback_current[2] = ((ADC2->JDR2 - offset_current[2]) / 4095.0f) * 3.3f / 64.0f / 2 * 1000.0f;
+    }
+}
 // 数学定数の定義 (M_PIが定義されていない場合用)
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -356,6 +368,20 @@ extern "C" void setup(void)
     HAL_UART_Transmit(&huart3, (uint8_t*)"Starting CORDIC\r\n", 18, HAL_MAX_DELAY);
     HAL_CORDIC_Init(&hcordic);
 
+    HAL_UART_Transmit(&huart3, (uint8_t*)"Starting ADC\r\n", 15, HAL_MAX_DELAY);
+    HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_Start(&hadc2);
+    HAL_ADCEx_InjectedStart_IT(&hadc1);
+    HAL_ADCEx_InjectedStart_IT(&hadc2);
+    
+    HAL_OPAMP_Start(&hopamp1);
+    HAL_OPAMP_Start(&hopamp2);
+    HAL_OPAMP_Start(&hopamp3);
+
+    
+
     HAL_UART_Transmit(&huart3, (uint8_t*)"Timer for PWM_CH1 start\r\n", 28, HAL_MAX_DELAY);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -371,9 +397,9 @@ extern "C" void setup(void)
         // モーターキャリブレーション
     static KJ_FOC_Utils::AlphaBeta outputAlphaBeta = KJ_FOC_Utils::inverseParkTransform({1, 0}, 1, 0);
     static KJ_FOC_Utils::Phase voltages = KJ_FOC_Utils::inverseClarkeTransform(outputAlphaBeta);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)(voltages.a * 100) + 1249);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, (uint16_t)(voltages.b * 100) + 1249);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, (uint16_t)(voltages.c * 100) + 1249);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)(voltages.a * 150) + 1249);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, (uint16_t)(voltages.b * 150) + 1249);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, (uint16_t)(voltages.c * 150) + 1249);
     HAL_Delay(1000);
     
     TIM3->CNT = 0;
@@ -381,12 +407,19 @@ extern "C" void setup(void)
     z_phase_detected_once = false; 
     mech_count = 0;
     encoder.setZeroPosition(encoder.getAngle());
+    HAL_Delay(500);
     HAL_UART_Transmit(&huart3, (uint8_t*)"Motor calibration complete\r\n", 33, HAL_MAX_DELAY);
     HAL_UART_Transmit(&huart3, (uint8_t*)"Starting timers interrupts for FOC\r\n", 36, HAL_MAX_DELAY);
     // encoder.init();
     HAL_TIM_Base_Start_IT(&htim1);
-    HAL_TIM_Base_Start_IT(&htim6);
+    // HAL_TIM_Base_Start_IT(&htim6);
     HAL_TIM_Base_Start_IT(&htim7);
+    for(int i = 0; i < 10; i ++){
+        offset_current[0] += ADC1->JDR1 / 10.0f;
+        offset_current[1] += ADC2->JDR1 / 10.0f;
+        offset_current[2] += ADC2->JDR2 / 10.0f;
+        HAL_Delay(1);
+    }
     HAL_UART_Transmit(&huart3, (uint8_t*)"Starting SSD1306 OLED\r\n", 25, HAL_MAX_DELAY);
     SSD1306_Init();
     SSD1306_WriteString(0, 0, "Hello STM32!");
@@ -404,19 +437,6 @@ uint8_t r, g, b;
 volatile int32_t  encoder_row = 0;
 extern "C" void loop(void)
 {
-    if(make1s == 1)
-    {
-        make1s = 0;
-        HAL_UART_Transmit(&huart3, (uint8_t*)"1s passed\r\n", 12, HAL_MAX_DELAY);
-        static char buff[64];
-        sprintf(buff,"callbackcout: %d\r\n", callbackcout);
-        callbackcout = 0;
-        HAL_UART_Transmit(&huart3, (uint8_t*)buff, strlen(buff), HAL_MAX_DELAY);
-        // _rotate_per_ = speed_count;
-        sprintf(buff,"rotate_per_sec: %ld\r\n", speed_count);
-        HAL_UART_Transmit(&huart3, (uint8_t*)buff, strlen(buff), HAL_MAX_DELAY);
-        // speed_count = 0;
-    }
     if(is_100ms)
     {
         // make1s++;
@@ -439,9 +459,17 @@ extern "C" void loop(void)
         snprintf(buff, sizeof(buff), "rad: %.2f", rad);
         SSD1306_WriteString(0, 0, buff);
 
-        snprintf(buff, sizeof(buff), "rps: %d", _rotate_per_);
+        snprintf(buff, sizeof(buff), "rps: %d", speed_count*10);
         SSD1306_WriteString(0, 8, buff);
-        
+        speed_count = 0;
+
+        KJ_FOC_Utils::AlphaBeta outputAlphaBeta = KJ_FOC_Utils::clarkeTransform({feedback_current[0], feedback_current[1], feedback_current[2]});
+        KJ_FOC_Utils::DQ voltages = KJ_FOC_Utils::parkTransform(outputAlphaBeta, 1, 0);
+        snprintf(buff, sizeof(buff), "Id=%.3f, Iq=%.3f", voltages.d, voltages.q);
+        SSD1306_WriteString(0, 16, buff);
+
+        snprintf(buff, sizeof(buff), "Ia=%.2f, Ib=%.2f, Ic=%.2f\r\n", feedback_current[0], feedback_current[1], feedback_current[2]);
+        HAL_UART_Transmit(&huart3, (uint8_t*)buff, strlen(buff), HAL_MAX_DELAY);
         // ----------------------------------------------------
         // 【追加】5. 右下32x32ピクセルでの角度可視化 (X:112, Y:48 を中心とする)
         // ----------------------------------------------------
@@ -451,11 +479,11 @@ extern "C" void loop(void)
         uint8_t centerY = 48;
         uint8_t radius = 14; // 外枠の円の半径
 
-        snprintf(buff, sizeof(buff), "rad: %.2f", rad);
-        SSD1306_WriteString(0, 20, buff);
-        SSD1306_DrawMeter(centerX, centerY, rad, radius, 1);
+        // snprintf(buff, sizeof(buff), "rad: %.2f", rad);
+        // SSD1306_WriteString(0, 20, buff);
+        // SSD1306_DrawMeter(centerX, centerY, rad, radius, 1);
         rad = electric_theta; // 電気角度を表示
-        SSD1306_DrawMeter(centerX + 64, centerY, rad, radius, 1);
+        // SSD1306_DrawMeter(centerX + 64, centerY, rad, radius, 1);
 
         // ----------------------------------------------------
         // 6. 画面の物理更新 (バッファを一括転送)
@@ -487,7 +515,7 @@ extern "C" void loop(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     // GPIO_PIN_X を実際のZ相が接続されているピンに書き換えてください (例: GPIO_PIN_13)
-    if(GPIO_Pin == GPIO_PIN_13) // 例: Z相がGPIO_PIN_15に接続されている場合
+    if(GPIO_Pin == GPIO_PIN_3) // 例: Z相がGPIO_PIN_15に接続されている場合
     {
         if (!z_phase_detected_once)
         {
@@ -498,11 +526,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         else
         {
             // 2回目以降: Z相通過のタイミングで mech_count を本来のオフセット位置に強制リセット（ズレの補正）
-            mech_count = z_phase_offset;
-            b = 10;
+            // mech_count = z_phase_offset;
         }
         speed_count++;
-        _rotate_per_++;
     }
 }
 volatile bool spiBusy;
@@ -531,12 +557,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim->Instance == TIM1 && isStopped == false)
     {
-        static uint16_t count = 300;
+        static uint16_t count = 100;
         static uint16_t duty[3] = {0, 0, 0};
-        static uint16_t bunkainou = 1200;
+        static uint16_t bunkainou = 1249;
         static uint16_t btime = 0;
         count_bunsyu++;
-        if(count_bunsyu >= 300)
+        if(count_bunsyu >= 200)
         {
             count_bunsyu = 0;
             if (count <= bunkainou)
@@ -548,17 +574,33 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         buf_enc = read_encoder_value();
         // buf_enc = encoder.getAngleRadian();
         mech_count -= buf_enc;
-        // mech_countを常に 0 ~ 4095 の範囲に収める
-        mech_count %= 4096; // 変更: 4096から2048に変更
+        // mech_count %= 4096; // 変更: 4096から2048に変更
         if(mech_count < 0)
         {
-            mech_count += 4096;
-            speed_count++;
+            mech_count += 4096; // 変更: 4096から2048に変更
+        }else if(mech_count >= 4096) // 変更: 4096から2048に変更
+        {
+            mech_count -= 4096; // 変更: 4096から2048に変更
         }
-        // mech_count = (rx[0] << 8) | rx[1];
-        // static uint16_t encoder_inv = (16384 - encoder_row) & 0x3FFF;
+        // while(mech_count < 0)
+        // {
+        //     mech_count += 4096; // 変更: 4096から2048に変更
+        // }
+        // while(mech_count >= 4096) // 変更: 4096から2048に変更
+        // {
+        //     mech_count -= 4096; // 変更: 4096から2048に変更
+        // }
         // electric_theta = (encoder_row / 16384.0f) * M_2PI * polePairs;
-        electric_theta = (mech_count / 4096.0f) * M_2PI * polePairs; // 変更: 4096から2048に変更
+        #define MORTOR_GAIN M_2PI * polePairs / 4096.0f
+        electric_theta = (mech_count *MORTOR_GAIN); // 変更: 4096から2048に変更// --------------------------------------------------------
+        // 【追加】高速回転時の遅延補正（進み角の追加）
+        // --------------------------------------------------------
+        // _rotate_per_ (rps) に比例して電気角を進める
+        // 補正係数（0.005fなど）はモータの極対数や制御周期に合わせて調整します。
+        // ※回転方向に応じて符号（+ / -）が逆になる場合は調整してください。
+        // float delay_compensation = (float)_rotate_per_ * 0.001f; 
+        // electric_theta += delay_compensation;
+        // --------------------------------------------------------
         // electric_theta = fmodf(electric_theta, M_2PI);
         while(electric_theta < -M_PI) electric_theta += M_2PI;
         while(electric_theta >= M_PI) electric_theta -= M_2PI;
@@ -568,19 +610,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         CORDIC_Wrapper::sin_cos(electric_theta, &sin, &cos);
         KJ_FOC_Utils::AlphaBeta outputAlphaBeta = KJ_FOC_Utils::inverseParkTransform({0, -1*count}, cos, sin);
         KJ_FOC_Utils::Phase voltages = KJ_FOC_Utils::inverseClarkeTransform(outputAlphaBeta);
-        if(isStopped)
-        {
-            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        }else{
+        
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, voltages.a + 1249);
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, voltages.b + 1249);
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, voltages.c + 1249);
-        }
                     
             callbackcout++;
-        // encoder.SPI_CS_Select();
         if(spiBusy == false)
         {
             spiBusy = true;
@@ -599,7 +634,5 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
     }else if(htim->Instance == TIM7){
         is_100ms = true;
-    }else if(htim->Instance == TIM6){
-        make1s = 1;
     }
 }
