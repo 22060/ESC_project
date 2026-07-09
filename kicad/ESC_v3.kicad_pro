@@ -84,7 +84,7 @@
         "hole_to_hole": "error",
         "holes_co_located": "warning",
         "invalid_outline": "error",
-        "isolated_copper": "ignore",
+        "isolated_copper": "warning",
         "item_on_disabled_layer": "error",
         "items_not_allowed": "error",
         "length_out_of_range": "error",
@@ -101,9 +101,9 @@
         "padstack": "warning",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_edge_clearance": "ignore",
-        "silk_over_copper": "ignore",
-        "silk_overlap": "ignore",
+        "silk_edge_clearance": "warning",
+        "silk_over_copper": "warning",
+        "silk_overlap": "warning",
         "skew_out_of_range": "error",
         "solder_mask_bridge": "error",
         "starved_thermal": "error",
@@ -520,7 +520,7 @@
       "plot": "C:/Users/kojor_fyn5sjo/Downloads/ESC_V3/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "ESC_v3.step",
       "svg": "",
       "vrml": ""
     },
@@ -681,16 +681,28 @@
       "Root"
     ],
     [
-      "89dab747-500c-4d30-aaae-2892da5dc15f",
-      "power_stage1"
+      "2d9f4ec9-b352-4bcb-b522-ddb55595a624",
+      "halfHbridge4"
     ],
     [
-      "b58b0be8-8252-4a19-bb00-8315ea20fe3c",
-      "power_stage"
+      "7a2a0d8a-1dc1-41bd-a666-95bb60a1f8e9",
+      "halfHbridge5"
     ],
     [
-      "f6007c1e-2115-4cff-923c-cb43600cb7fd",
-      "power_stage2"
+      "28902d94-f2ea-40ae-b377-f4b21a4213ab",
+      "halfHbridge6"
+    ],
+    [
+      "d3a6e050-6517-43f0-b768-da242c06b176",
+      "halfHbridge7"
+    ],
+    [
+      "0e3eee62-75d8-40b5-8cd0-e413cf0d61ee",
+      "halfHbridge8"
+    ],
+    [
+      "b4beff9c-7fa6-43aa-aab0-cae274fa03e7",
+      "halfHbridge9"
     ],
     [
       "c7e7597f-e80e-4b08-94bb-e83c44551dab",
